@@ -239,6 +239,25 @@ dialog.addEventListener('close', () => {
   renderBar();
 });
 
+// ── Date display ─────────────────────────────────────────────────────────────
+const dateEl = document.getElementById('date-display');
+function renderDate() {
+  const now = new Date();
+  const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+  dateEl.textContent =
+    `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日　週${weekdays[now.getDay()]}`;
+}
+renderDate();
+// refresh at midnight
+const msToMidnight = () => {
+  const n = new Date();
+  return (new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1) - n);
+};
+setTimeout(function tick() {
+  renderDate();
+  setTimeout(tick, msToMidnight());
+}, msToMidnight());
+
 // ── Init ──────────────────────────────────────────────────────────────────────
 renderBar();
 // buildCorals + buildCreatures called on first canvas frame (real dims available then)
