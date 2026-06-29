@@ -5,7 +5,7 @@ import { Fish, Jellyfish } from './visual/creatures.js';
 import { SporeParticles }  from './visual/particles.js';
 import {
   loadData, saveData, addHabit, removeHabit,
-  completeToday, isCompletedToday,
+  completeToday, isCompletedToday, saveNote,
 } from './habits.js';
 import { checkNewMilestone, getUnlockedMilestones } from './milestones.js';
 
@@ -100,6 +100,16 @@ const addBtn = document.getElementById('add-btn');
 const dialog = document.getElementById('add-dialog');
 const input  = document.getElementById('habit-input');
 
+const noteDialog      = document.getElementById('note-dialog');
+const noteDialogHabit = document.getElementById('note-dialog-habit');
+const noteTextarea    = document.getElementById('note-input');
+
+const detailDialog      = document.getElementById('detail-dialog');
+const detailDialogTitle = document.getElementById('detail-dialog-title');
+const detailEntries     = document.getElementById('detail-entries');
+
+let _pendingCheckId = null;
+
 // ── Render habit chips ────────────────────────────────────────────────────────
 function renderBar() {
   bar.innerHTML = '';
@@ -122,7 +132,7 @@ function renderBar() {
       ? `<span class="chip-streak" title="連續 ${habit.streak} 天">🔥${habit.streak}</span>`
       : '';
     chip.innerHTML = `
-      <span class="chip-name" style="color:${habit.color}">${habit.name}</span>
+      <span class="chip-name" data-id="${habit.id}" style="color:${habit.color}" title="點此查看打卡紀錄">${habit.name}</span>
       ${streakBadge}
       <button class="chip-check${done ? ' done' : ''}"
               data-id="${habit.id}"
@@ -140,42 +150,27 @@ function renderBar() {
 bar.addEventListener('click', e => {
   const checkBtn = e.target.closest('.chip-check');
   const delBtn   = e.target.closest('.chip-del');
+  const nameSpan = e.target.closest('.chip-name');
+
+  if (nameSpan) {
+    const id    = nameSpan.dataset.id;
+    const habit = data.habits.find(h => h.id === id);
+    if (habit) openDetailDialog(habit);
+    return;
+  }
 
   if (checkBtn && !checkBtn.disabled) {
-    const id = checkBtn.dataset.id;
+    const id    = checkBtn.dataset.id;
     const habit = data.habits.find(h => h.id === id);
-    // Double-check: guard against stale UI vs. in-memory state divergence
-    if (habit && isCompletedToday(habit)) {
-      renderBar();
-      return;
-    }
-    if (completeToday(data, id)) {
-      corals[id]?.growOne(currentT);
-      const mType = checkNewMilestone(data, habit);
-      if (mType) {
-        data.milestones.push({
-          habitId:    id,
-          type:       mType,
-          unlockedAt: new Date().toISOString().slice(0, 10),
-        });
-        saveData(data);
-
-        // Spawn visual for fish / jellyfish milestones
-        if (mType === 'fish' || mType === 'jellyfish') buildCreatures();
-        if (mType === 'jellyfish') {
-          const coral = corals[id];
-          if (coral) {
-            particles.push(new SporeParticles({
-              x:     coral._baseX,
-              y:     coral.topY,
-              color: habit.color,
-            }));
-          }
-        }
-        // atlantis milestone visual handled in Phase 4 (ruins.js)
-      }
-      renderBar();
-    }
+    if (habit && isCompletedToday(habit)) { renderBar(); return; }
+    // Open note dialog; actual check-in happens in noteDialog 'close' handler
+    _pendingCheckId = id;
+    noteDialogHabit.textContent = habit.name;
+    noteTextarea.value = '';
+    noteDialog.returnValue = '';
+    noteDialog.showModal();
+    noteTextarea.focus();
+    return;
   }
 
   if (delBtn) {
@@ -193,6 +188,104 @@ bar.addEventListener('click', e => {
     buildCorals(false);
     buildCreatures();
     renderBar();
+  }
+});
+
+// ── Note dialog: complete check-in after user optionally writes a note ────────
+noteDialog.addEventListener('close', () => {
+  const id = _pendingCheckId;
+  _pendingCheckId = null;
+  // returnValue '' means ESC / cancelled; 'skip' or 'ok' both proceed
+  if (!id || noteDialog.returnValue === '') return;
+
+  const habit = data.habits.find(h => h.id === id);
+  const note  = noteDialog.returnValue === 'ok' ? noteTextarea.value.trim() : '';
+
+  if (completeToday(data, id, note)) {
+    corals[id]?.growOne(currentT);
+    const mType = checkNewMilestone(data, habit);
+    if (mType) {
+      data.milestones.push({
+        habitId:    id,
+        type:       mType,
+        unlockedAt: new Date().toISOString().slice(0, 10),
+      });
+      saveData(data);
+      if (mType === 'fish' || mType === 'jellyfish') buildCreatures();
+      if (mType === 'jellyfish') {
+        const coral = corals[id];
+        if (coral) {
+          particles.push(new SporeParticles({
+            x:     coral._baseX,
+            y:     coral.topY,
+            color: habit.color,
+          }));
+        }
+      }
+    }
+    renderBar();
+  }
+});
+
+// ── Detail dialog: view + edit notes for all completed days ──────────────────
+function _fmtDate(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const days = ['日', '一', '二', '三', '四', '五', '六'];
+  return `${y}年${m}月${d}日（週${days[new Date(dateStr).getDay()]}）`;
+}
+
+function openDetailDialog(habit) {
+  detailDialogTitle.textContent = habit.name;
+  detailDialogTitle.style.color = habit.color;
+
+  const sorted = [...habit.completions].sort().reverse();
+  if (sorted.length === 0) {
+    detailEntries.innerHTML = '';
+  } else {
+    detailEntries.innerHTML = sorted.map(date => {
+      const note = (habit.notes || {})[date] || '';
+      return `
+        <div class="detail-entry" data-date="${date}" data-habit-id="${habit.id}">
+          <span class="detail-date">${_fmtDate(date)}</span>
+          <textarea class="detail-note" placeholder="記錄當天狀況…" maxlength="200" rows="2">${note}</textarea>
+        </div>`;
+    }).join('');
+
+    detailEntries.querySelectorAll('.detail-note').forEach(ta => {
+      ta.addEventListener('blur', e => {
+        const entry   = e.target.closest('.detail-entry');
+        const habitId = entry.dataset.habitId;
+        const date    = entry.dataset.date;
+        saveNote(data, habitId, date, e.target.value);
+        // Sync in-memory habit.notes so re-opens show updated value
+        const h = data.habits.find(x => x.id === habitId);
+        if (h) {
+          if (e.target.value.trim()) h.notes[date] = e.target.value.trim();
+          else delete h.notes[date];
+        }
+      });
+    });
+  }
+
+  detailDialog.showModal();
+}
+
+// ── Canvas click: click a coral to open its detail dialog ────────────────────
+document.getElementById('ocean').addEventListener('click', e => {
+  const rect = e.target.getBoundingClientRect();
+  const cx   = e.clientX - rect.left;
+  const cy   = e.clientY - rect.top;
+  const THRESHOLD = 60;
+
+  let closest = null, minDist = Infinity;
+  for (const [id, coral] of Object.entries(corals)) {
+    const dx = Math.abs(coral._baseX - cx);
+    if (dx < THRESHOLD && dx < minDist) { minDist = dx; closest = id; }
+  }
+
+  if (closest) {
+    const habit = data.habits.find(h => h.id === closest);
+    if (habit) openDetailDialog(habit);
   }
 });
 

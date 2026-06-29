@@ -9,8 +9,10 @@ export function loadData() {
   try {
     const raw  = localStorage.getItem(KEY);
     const data = raw ? JSON.parse(raw) : { habits: [], milestones: [] };
-    // Recalculate streaks on every load (handles days passing while tab was closed)
-    for (const h of data.habits) h.streak = _calcStreak(h.completions);
+    for (const h of data.habits) {
+      if (!h.notes) h.notes = {};
+      h.streak = _calcStreak(h.completions);
+    }
     return data;
   } catch {
     return { habits: [], milestones: [] };
@@ -28,6 +30,7 @@ export function addHabit(data, name) {
     color:       PALETTE[data.habits.length % PALETTE.length],
     createdAt:   today(),
     completions: [],
+    notes:       {},
     streak:      0,
   };
   data.habits.push(habit);
@@ -42,15 +45,26 @@ export function removeHabit(data, id) {
 }
 
 // Returns true if the check-in succeeded (false = already done today)
-export function completeToday(data, id) {
+export function completeToday(data, id, note = '') {
   const habit = data.habits.find(h => h.id === id);
   if (!habit) return false;
   const t = today();
   if (habit.completions.includes(t)) return false;
   habit.completions.push(t);
   habit.streak = _calcStreak(habit.completions);
+  if (!habit.notes) habit.notes = {};
+  if (note) habit.notes[t] = note;
   saveData(data);
   return true;
+}
+
+export function saveNote(data, id, date, noteText) {
+  const habit = data.habits.find(h => h.id === id);
+  if (!habit) return;
+  if (!habit.notes) habit.notes = {};
+  if (noteText.trim()) habit.notes[date] = noteText.trim();
+  else delete habit.notes[date];
+  saveData(data);
 }
 
 export function isCompletedToday(habit) {

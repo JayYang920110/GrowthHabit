@@ -24,6 +24,26 @@
     </form>
   </dialog>
 
+  <dialog id="note-dialog">
+    <form method="dialog">
+      <p class="dialog-title">今日打卡</p>
+      <p id="note-dialog-habit"></p>
+      <textarea id="note-input" placeholder="記錄今天的狀況（可略）" maxlength="200" rows="3"></textarea>
+      <div class="dialog-actions">
+        <button type="submit" value="skip" class="btn-secondary">跳過</button>
+        <button type="submit" value="ok">確認打卡</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="detail-dialog">
+    <form method="dialog">
+      <p class="dialog-title" id="detail-dialog-title"></p>
+      <div id="detail-entries"></div>
+      <button type="submit">關閉</button>
+    </form>
+  </dialog>
+
   <script type="module" src="src/main.js"></script>
 </body>
 </html>
