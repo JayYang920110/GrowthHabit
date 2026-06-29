@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GrowthHabit — 讓習慣活成一片珊瑚礁</title>
+  <link rel="stylesheet" href="src/styles/main.css">
+  <link rel="stylesheet" href="src/styles/animations.css">
+</head>
+<body>
+  <canvas id="ocean"></canvas>
+  <div id="ui-overlay">
+    <p id="empty-hint">⬇ 點 ＋ 種下你的第一株珊瑚</p>
+    <div id="habit-bar"></div>
+    <button id="add-btn" aria-label="新增習慣">＋</button>
+  </div>
+
+  <dialog id="add-dialog">
+    <form method="dialog">
+      <p class="dialog-title">新增習慣</p>
+      <input id="habit-input" type="text" placeholder="習慣名稱" maxlength="20" autocomplete="off">
+      <button type="submit" value="ok">種下珊瑚</button>
+    </form>
+  </dialog>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>

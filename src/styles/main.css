@@ -1,0 +1,241 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #050D1A;
+}
+
+#ocean {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+#ui-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: 2rem;
+  gap: 0.85rem;
+}
+
+/* ── Empty state ── */
+#empty-hint {
+  font-size: 15px;
+  color: rgba(61, 214, 232, 0.72);
+  letter-spacing: 0.04em;
+  pointer-events: none;
+  margin-bottom: 0.5rem;
+}
+
+@keyframes pulse-hint {
+  0%, 100% { opacity: 0.72; }
+  50%       { opacity: 0.38; }
+}
+
+.pulse-hint {
+  animation: pulse-hint 2s ease-in-out infinite;
+}
+
+/* ── Bottom bar ── */
+#habit-bar {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  pointer-events: auto;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 90vw;
+  background: rgba(5, 13, 26, 0.78);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(61, 214, 232, 0.16);
+  border-radius: 3rem;
+  padding: 0.55rem 1rem;
+}
+
+#habit-bar:empty { display: none; }
+
+.habit-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chip-name {
+  font-size: 13px;
+  letter-spacing: 0.02em;
+}
+
+.chip-streak {
+  font-size: 11px;
+  color: rgba(255, 190, 80, 0.9);
+  letter-spacing: 0.01em;
+  line-height: 1;
+  /* subtle amber glow to match ocean palette without clashing */
+  text-shadow: 0 0 6px rgba(255, 180, 60, 0.45);
+  white-space: nowrap;
+}
+
+.chip-check, .chip-del {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1.5px solid;
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: box-shadow 0.18s, opacity 0.18s;
+  line-height: 1;
+}
+
+.chip-check {
+  border-color: rgba(61, 214, 232, 0.45);
+  color: rgba(61, 214, 232, 0.6);
+}
+
+.chip-check:not(:disabled):hover {
+  border-color: rgba(61, 214, 232, 0.9);
+  color: rgba(61, 214, 232, 0.95);
+  box-shadow: 0 0 8px rgba(61, 214, 232, 0.35);
+}
+
+.chip-check.done {
+  border-color: #3DD6E8;
+  color: #3DD6E8;
+  box-shadow: 0 0 10px rgba(61, 214, 232, 0.4);
+  cursor: default;
+}
+
+.chip-del {
+  border-color: rgba(200, 100, 80, 0.25);
+  color: rgba(200, 100, 80, 0.4);
+  font-size: 15px;
+  margin-left: 0.3rem;
+}
+
+.chip-del:hover {
+  border-color: rgba(200, 100, 80, 0.7);
+  color: rgba(200, 100, 80, 0.85);
+  box-shadow: 0 0 6px rgba(200, 100, 80, 0.25);
+}
+
+/* ── Add button ── */
+#add-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(61, 214, 232, 0.4);
+  background: transparent;
+  color: rgba(61, 214, 232, 0.65);
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+  pointer-events: auto;
+  transition: box-shadow 0.18s, color 0.18s, border-color 0.18s;
+}
+
+#add-btn:hover {
+  border-color: rgba(61, 214, 232, 0.9);
+  color: rgba(61, 214, 232, 0.95);
+  box-shadow: 0 0 10px rgba(61, 214, 232, 0.4);
+}
+
+@keyframes add-btn-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(61, 214, 232, 0.5);
+    border-color: rgba(61, 214, 232, 0.8);
+    color: rgba(61, 214, 232, 0.9);
+  }
+  50% {
+    box-shadow: 0 0 14px 4px rgba(61, 214, 232, 0.25);
+    border-color: rgba(61, 214, 232, 0.4);
+    color: rgba(61, 214, 232, 0.65);
+  }
+}
+
+#add-btn.guide-pulse {
+  animation: add-btn-pulse 1.2s ease-in-out infinite;
+}
+
+/* ── Add dialog ── */
+#add-dialog {
+  background: rgba(6, 16, 32, 0.96);
+  border: 1px solid rgba(61, 214, 232, 0.22);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  color: #C8DCE8;
+  min-width: 280px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+#add-dialog::backdrop {
+  background: rgba(2, 8, 16, 0.65);
+  backdrop-filter: blur(4px);
+}
+
+#add-dialog form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.dialog-title {
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(61, 214, 232, 0.6);
+}
+
+#habit-input {
+  background: rgba(12, 28, 52, 0.8);
+  border: 1px solid rgba(61, 214, 232, 0.28);
+  border-radius: 0.5rem;
+  padding: 0.65rem 0.9rem;
+  color: #C8DCE8;
+  font-size: 15px;
+  outline: none;
+  width: 100%;
+}
+
+#habit-input::placeholder { color: rgba(80, 120, 150, 0.55); }
+
+#habit-input:focus {
+  border-color: rgba(61, 214, 232, 0.55);
+  box-shadow: 0 0 8px rgba(61, 214, 232, 0.12);
+}
+
+#add-dialog button[type="submit"] {
+  background: rgba(61, 214, 232, 0.1);
+  border: 1px solid rgba(61, 214, 232, 0.38);
+  border-radius: 0.5rem;
+  color: #3DD6E8;
+  font-size: 14px;
+  padding: 0.6rem;
+  cursor: pointer;
+  transition: background 0.18s, box-shadow 0.18s;
+}
+
+#add-dialog button[type="submit"]:hover {
+  background: rgba(61, 214, 232, 0.18);
+  box-shadow: 0 0 10px rgba(61, 214, 232, 0.25);
+}

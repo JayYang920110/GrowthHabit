@@ -1,0 +1,5 @@
+/* Phase 3: coral sway — implemented when creatures.js is added */
+@keyframes sway {
+  0%, 100% { transform: rotate(-2deg); transform-origin: bottom center; }
+  50%       { transform: rotate( 2deg); transform-origin: bottom center; }
+}
